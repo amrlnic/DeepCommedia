@@ -25,11 +25,13 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Reshape
 from keras.layers import Flatten
+from keras.layers import Conv1D
 from keras.layers import Conv2D
 from keras.layers import Conv2DTranspose
 from keras.layers import LeakyReLU
 from keras.layers import Dropout
 from keras.layers import LSTM
+from keras.layers import Embedding
 from keras.callbacks import ModelCheckpoint
 from keras.utils import np_utils
 from matplotlib import pyplot
@@ -102,6 +104,10 @@ y
 # define the standalone discriminator model
 def define_discriminator():
 	model = Sequential()
+	#model.add(Embedding(1000, 64, input_length=10))
+	#model.add(Conv1D(32, 5, activation='relu', input_shape=(100, 41)))
+	#model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(100, 41)))
+	#model.add(Flatten())
 	model.add(Dense(16, activation='relu'))
 	model.add(LeakyReLU(alpha=0.2))
 	model.add(Dropout(0.4))
@@ -119,11 +125,11 @@ def define_generator():
     model = Sequential()
     model.add(LSTM(16, input_shape=(X.shape[1], X.shape[2])))
     model.add(Dropout(0.2))
-    model.add(Dense(y.shape[0], activation='softmax'))
-    #model.add(Dense(y.shape[1], activation='softmax'))
+    #model.add(Dense(y.shape[0], activation='softmax'))
+    model.add(Dense(y.shape[1], activation='softmax'))
     
     filename = "test_pesi_16_layers.hdf5"
-    #model.load_weights(filename)
+    model.load_weights(filename)
     model.compile(loss='categorical_crossentropy', optimizer='adam')
     
     return model
@@ -155,9 +161,9 @@ def generate_real_samples(raw_text, n_samples):
         N = numpy.append(N,[char_to_int[char] for char in raw_text[el:el+100]])
     # generate 'real' class labels (1)
     
-    N = numpy.reshape(N, (n_samples, seq_length))
-    #N = numpy.reshape(N, (n_samples, seq_length, 1))
-    #N = np_utils.to_categorical(N, 41)
+    #N = numpy.reshape(N, (n_samples, seq_length))
+    N = numpy.reshape(N, (n_samples, seq_length, 1))
+    N = np_utils.to_categorical(N, 41)
     y = ones((n_samples, 1))
     return N, y
 
@@ -191,9 +197,9 @@ def generate_fake_samples(dataX, g_model,  n_samples):
        D = numpy.append(D, [char_to_int[char] for char in gen_RNN_output(dataX, g_model)])
 
     print("D size = ", D.shape)
-    X = numpy.reshape(D, (n_samples, seq_length))
-    #X = numpy.reshape(D, (n_samples, seq_length, 1))
-    #X = np_utils.to_categorical(X, 41)
+    #X = numpy.reshape(D, (n_samples, seq_length))
+    X = numpy.reshape(D, (n_samples, seq_length, 1))
+    X = np_utils.to_categorical(X, 41)
 
     print("X size = ", X.shape)
     # create 'fake' class labels (0)
